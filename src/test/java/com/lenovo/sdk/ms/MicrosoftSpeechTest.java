@@ -22,9 +22,7 @@ import com.alibaba.fastjson.JSON;
 public class MicrosoftSpeechTest {
 
 	private static final int ONE_HUNDRED_MILLISECOND = 3200;
-	// private static final String uri = "ws://10.120.22.113:8899/wss/translator";
-	// private static final String uri = "ws://127.0.0.1:8899/wss/translator";
-	private static final String uri = "ws://10.120.115.183:8899/wss/translator";
+	private static final String uri = "ws://127.0.0.1:8899/wss/translator";
 
 	private static final Map<String, Object> request = new HashMap<>();
 	

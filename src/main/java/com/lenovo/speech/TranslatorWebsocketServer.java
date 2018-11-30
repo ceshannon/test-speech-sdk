@@ -38,6 +38,7 @@ public class TranslatorWebsocketServer extends WebSocketServer implements Transl
 		taskSession.remove(cid);
 		TranslationTask task = TranslationTaskMgmt.find(cid);
 		task.destroy();
+		TranslationTaskMgmt.unregister(cid);
 	}
 
 	@Override
@@ -71,6 +72,7 @@ public class TranslatorWebsocketServer extends WebSocketServer implements Transl
 			taskSession.remove(cid);
 			TranslationTask task = TranslationTaskMgmt.find(cid);
 			task.destroy();
+			TranslationTaskMgmt.unregister(cid);
 		}
 	}
 
@@ -99,7 +101,15 @@ public class TranslatorWebsocketServer extends WebSocketServer implements Transl
 
 	@Override
 	public void onClose(String sid) {
+		WebSocket session = taskSession.get(sid);
+		if (session != null) {
+			try {
+				session.close();
+			} catch (Exception e) {
+			}
+		}
 		taskSession.remove(sid);
+//		TranslationTaskMgmt.unregister(sid);
 	}
 	
 	public static void main(String[] args) {

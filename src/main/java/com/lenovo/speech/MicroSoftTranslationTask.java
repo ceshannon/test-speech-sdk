@@ -2,11 +2,14 @@ package com.lenovo.speech;
 
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.alibaba.fastjson.JSONObject;
 import com.microsoft.cognitiveservices.speech.CancellationReason;
 import com.microsoft.cognitiveservices.speech.ResultReason;
 import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
@@ -15,18 +18,20 @@ import com.microsoft.cognitiveservices.speech.translation.SpeechTranslationConfi
 import com.microsoft.cognitiveservices.speech.translation.TranslationRecognizer;
 
 public class MicroSoftTranslationTask implements TranslationTask, Runnable {
+	private static final Logger logger = LoggerFactory.getLogger(MicroSoftTranslationTask.class);
 	
 	private CountDownLatch latch = null;
 	private PushAudioInputStream pushStream = null;
 	private TranslationRecognizer recognizer = null;
 	private Semaphore stopTranslationWithFileSemaphore;
 	private TranslatorDataCallback callback = null;
-	private String sid = null;
+	private String sid = null, sentenceId = "";
 	public MicroSoftTranslationTask(String sid, TranslatorDataCallback callback) {
 		latch = new CountDownLatch(1);
 		pushStream = PushAudioInputStream.create();
 		this.callback = callback;
 		this.sid = sid;
+		sentenceId = UUID.randomUUID().toString();
 		stopTranslationWithFileSemaphore = new Semaphore(0);
 	}
 
@@ -48,7 +53,7 @@ public class MicroSoftTranslationTask implements TranslationTask, Runnable {
 		String to = "en-US";
 		SpeechTranslationConfig config = null;
 		try {
-			config = SpeechTranslationConfig.fromSubscription("xxxxxxxxxxxxx", "eastasia");
+			config = SpeechTranslationConfig.fromSubscription("xxxxxxxxxxxxxxxx", "eastasia");
 		} catch (Exception e) {
 		}
 		config.setSpeechRecognitionLanguage(from);
@@ -62,6 +67,8 @@ public class MicroSoftTranslationTask implements TranslationTask, Runnable {
 				for (String element : map.keySet()) {
 					System.out.println("    TRANSLATING into '" + element + "'': " + map.get(element));
 				}
+				String result = encodeResult(e.getResult().getText(), map.get(to.substring(0, 2)), 0);
+				callback.onResult(sid, result);
 			} catch (Exception el) {
 			}
 		});
@@ -76,7 +83,8 @@ public class MicroSoftTranslationTask implements TranslationTask, Runnable {
 				for (String element : map.keySet()) {
 					System.out.println("    TRANSLATED into '" + element + "'': " + map.get(element));
 				}
-				callback.onResult(sid, e.getResult().getText());
+				String result = encodeResult(e.getResult().getText(), map.get(to.substring(0, 2)), 1);
+				callback.onResult(sid, result);
 			}
 			if (e.getResult().getReason() == ResultReason.RecognizedSpeech) {
 				System.out.println("RECOGNIZED: Text=" + e.getResult().getText());
@@ -131,10 +139,29 @@ public class MicroSoftTranslationTask implements TranslationTask, Runnable {
 			System.out.println("translation unkown error..." + e1.getMessage());
 		}
 	}
+	
+	public String encodeResult(String recognition, String translation, int isEnd) {
+		JSONObject source = new JSONObject();
+		source.put("language", "chinese");
+		source.put("text", recognition);
+		JSONObject target = new JSONObject();
+		target.put("language", "english");
+		target.put("text", translation);
+		JSONObject ret = new JSONObject();
+		ret.put("source", source);
+		ret.put("target", target);
+		ret.put("eof", isEnd);
+		ret.put("sentenceId", sentenceId);
+		if (isEnd == 1) {
+			sentenceId = UUID.randomUUID().toString();
+		}
+		return ret.toJSONString();
+	}
 
 	@Override
 	public void destroy() {
-		
+		stopTranslationWithFileSemaphore.release();
+//		callback.onClose(sid);
 	}
 
 }
