@@ -18,8 +18,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class TranslatorWebsocketServer extends WebSocketServer implements TranslatorDataCallback, CommandLineRunner{
 	private final Map<String, WebSocket> taskSession = new ConcurrentHashMap<>();
 	
-	public TranslatorWebsocketServer() {
+	private String apikey = "";
+	private String region = "";
+	public TranslatorWebsocketServer(String apikey, String region) {
 		super(new InetSocketAddress(8899));
+		this.apikey = apikey;
+		this.region = region;
 	}
 
 	@Override
@@ -51,7 +55,7 @@ public class TranslatorWebsocketServer extends WebSocketServer implements Transl
 	}
 	
 	private TranslationTask createTask(String sid) {
-		return new MicroSoftTranslationTask(sid, this);
+		return new MicroSoftTranslationTask(sid, apikey, region, this);
 	}
 
 	@Override
@@ -118,7 +122,9 @@ public class TranslatorWebsocketServer extends WebSocketServer implements Transl
 
 	@Override
 	public void run(String... args) throws Exception {
-		new TranslatorWebsocketServer().start();
+		String key = args[0];
+		String value = args[1];
+		new TranslatorWebsocketServer(key, value).start();
 	}
 
 }

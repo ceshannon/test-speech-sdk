@@ -26,13 +26,17 @@ public class MicroSoftTranslationTask implements TranslationTask, Runnable {
 	private Semaphore stopTranslationWithFileSemaphore;
 	private TranslatorDataCallback callback = null;
 	private String sid = null, sentenceId = "";
-	public MicroSoftTranslationTask(String sid, TranslatorDataCallback callback) {
+	private String apikey = "";
+	private String region = "";
+	public MicroSoftTranslationTask(String sid, String apikey, String region, TranslatorDataCallback callback) {
 		latch = new CountDownLatch(1);
 		pushStream = PushAudioInputStream.create();
 		this.callback = callback;
 		this.sid = sid;
 		sentenceId = UUID.randomUUID().toString();
 		stopTranslationWithFileSemaphore = new Semaphore(0);
+		this.apikey = apikey;
+		this.region = region;
 	}
 
 	public void enqueue(byte[] data) {
@@ -53,7 +57,7 @@ public class MicroSoftTranslationTask implements TranslationTask, Runnable {
 		String to = "en-US";
 		SpeechTranslationConfig config = null;
 		try {
-			config = SpeechTranslationConfig.fromSubscription("xxxxxxxxxxxxxxxx", "eastasia");
+			config = SpeechTranslationConfig.fromSubscription(apikey, region);
 		} catch (Exception e) {
 		}
 		config.setSpeechRecognitionLanguage(from);
