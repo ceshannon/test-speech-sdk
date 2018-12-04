@@ -10,20 +10,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication
-public class TranslatorWebsocketServer extends WebSocketServer implements TranslatorDataCallback, CommandLineRunner{
+public class TranslatorWebsocketServer extends WebSocketServer implements TranslatorDataCallback{
 	private final Map<String, WebSocket> taskSession = new ConcurrentHashMap<>();
 	
 	private String apikey = "";
 	private String region = "";
-	public TranslatorWebsocketServer(String apikey, String region) {
+	public TranslatorWebsocketServer() {
 		super(new InetSocketAddress(8899));
-		this.apikey = apikey;
-		this.region = region;
+//		this.apikey = apikey;
+//		this.region = region;
 	}
 
 	@Override
@@ -116,15 +112,20 @@ public class TranslatorWebsocketServer extends WebSocketServer implements Transl
 //		TranslationTaskMgmt.unregister(sid);
 	}
 	
-	public static void main(String[] args) {
-		SpringApplication.run(TranslatorWebsocketServer.class, args);
+	public String getApikey() {
+		return apikey;
 	}
 
-	@Override
-	public void run(String... args) throws Exception {
-		String key = args[0];
-		String value = args[1];
-		new TranslatorWebsocketServer(key, value).start();
+	public void setApikey(String apikey) {
+		this.apikey = apikey;
+	}
+
+	public String getRegion() {
+		return region;
+	}
+
+	public void setRegion(String region) {
+		this.region = region;
 	}
 
 }
